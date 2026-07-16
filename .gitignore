@@ -1,0 +1,65 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+*.egg-info/
+dist/
+build/
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+database/*.db
+
+# Logs
+logs/
+*.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Secrets
+*.pem
+*.key
+*.crt
+*.p12
+
+# Temporary
+tmp/
+temp/
+*.tmp
+
+# Coverage
+coverage/
+htmlcov/
+.tox/
+.mypy_cache/
+.pytest_cache/
+
+# Node
+node_modules/
+npm-debug.log*
+
+# Project specific
+backend/__pycache__/
+modules/__pycache__/
+database/__pycache__/
