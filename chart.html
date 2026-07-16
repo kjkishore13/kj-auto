@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>KJs TRD - Interactive Chart</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background: #0b0e14;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            color: #e8edf5;
+        }
+        .topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 20px;
+            background: #131a24;
+            border-bottom: 1px solid #2a3a4e;
+            flex-shrink: 0;
+            height: 48px;
+        }
+        .topbar .logo {
+            font-weight: 700;
+            font-size: 16px;
+            color: #e8edf5;
+        }
+        .topbar .logo span {
+            color: #3b82f6;
+        }
+        .topbar .symbol-info {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        .topbar .symbol-info .price {
+            font-size: 20px;
+            font-weight: 700;
+        }
+        .topbar .symbol-info .change {
+            font-size: 14px;
+            font-weight: 600;
+        }
+        .topbar .symbol-info .change.green {
+            color: #22c55e;
+        }
+        .topbar .symbol-info .change.red {
+            color: #ef4444;
+        }
+        .topbar .timeframes {
+            display: flex;
+            gap: 4px;
+            background: #0b0e14;
+            padding: 2px;
+            border-radius: 6px;
+            border: 1px solid #2a3a4e;
+        }
+        .topbar .timeframes button {
+            background: transparent;
+            border: none;
+            color: #8a9bb5;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: 0.25s ease;
+        }
+        .topbar .timeframes button:hover {
+            color: #e8edf5;
+            background: #1e2a3d;
+        }
+        .topbar .timeframes button.active {
+            background: #3b82f6;
+            color: #fff;
+        }
+        #chart-container {
+            flex: 1;
+            position: relative;
+            background: #0f1620;
+        }
+        .bottom-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 6px 20px;
+            background: #131a24;
+            border-top: 1px solid #2a3a4e;
+            flex-shrink: 0;
+            height: 32px;
+            font-size: 11px;
+            color: #5a6f8a;
+        }
+        .bottom-bar .indicators {
+            display: flex;
+            gap: 16px;
+        }
+        .bottom-bar .indicators span {
+            cursor: pointer;
+            padding: 2px 8px;
+            border-radius: 4px;
+            transition: 0.25s ease;
+        }
+        .bottom-bar .indicators span:hover {
+            background: #1e2a3d;
+            color: #e8edf5;
+        }
+        .bottom-bar .indicators span.active {
+            color: #3b82f6;
+        }
+        .back-btn {
+            background: rgba(59, 130, 246, 0.15);
+            color: #3b82f6;
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            padding: 4px 14px;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: 0.25s ease;
+            text-decoration: none;
+        }
+        .back-btn:hover {
+            background: rgba(59, 130, 246, 0.25);
+        }
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: #0f1620;
+            border: 1px solid #2a3a4e;
+            color: #e8edf5;
+            padding: 10px 18px;
+            border-radius: 6px;
+            font-size: 13px;
+            z-index: 9999;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.6);
+            animation: slideUp 0.3s ease;
+        }
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- TOP BAR -->
+    <div class="topbar">
+        <div class="logo">
+            📈 KJs <span>TRD</span>
+            <a href="index.html" class="back-btn" style="margin-left:12px;">← Back to Terminal</a>
+        </div>
+        <div class="symbol-info">
+            <span style="font-weight:600;color:#8a9bb5;">NIFTY 50</span>
+            <span class="price" id="currentPrice">22,450.75</span>
+            <span class="change green" id="currentChange">▲ +142.30 (+0.64%)</span>
+        </div>
+        <div class="timeframes">
+            <button data-tf="1m">1m</button>
+            <button data-tf="5m">5m</button>
+            <button data-tf="15m" class="active">15m</button>
+            <button data-tf="1h">1h</button>
+            <button data-tf="1d">1d</button>
+        </div>
+    </div>
+
+    <!-- CHART -->
+    <div id="chart-container"></div>
+
+    <!-- BOTTOM BAR -->
+    <div class="bottom-bar">
+        <span>📊 Interactive Chart</span>
+        <div class="indicators">
+            <span class="active">📈 EMA 20</span>
+            <span>📊 VWAP</span>
+            <span>📉 RSI</span>
+            <span>📉 MACD</span>
+        </div>
+        <span>🔄 Live Data</span>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- JAVASCRIPT -->
+    <!-- ============================================================ -->
+    <script>
+        // ============================================================
+        // 1. GENERATE MOCK DATA (FALLBACK)
+        // ============================================================
+        function generateMockData(count = 100) {
+            const data = [];
+            let price = 22400;
+            const now = new Date();
+            const oneHour = 60 * 60 * 1000;
+
+            for (let i = count - 1; i >= 0; i--) {
+                const change = (Math.random() - 0.48) * 60;
+                const open = price;
+                const close = price + change;
+                const high = Math.max(open, close) + Math.random() * 20;
+                const low = Math.min(open, close) - Math.random() * 20;
+
+                data.push({
+                    time: new Date(now.getTime() - i * oneHour).getTime() / 1000,
+                    open: Math.round(open * 100) / 100,
+                    high: Math.round(high * 100) / 100,
+                    low: Math.round(low * 100) / 100,
+                    close: Math.round(close * 100) / 100,
+                });
+
+                price = close;
+            }
+
+            return data;
+        }
+
+        // ============================================================
+        // 2. FETCH REAL DATA FROM BACKEND
+        // ============================================================
+        async function fetchCandleData() {
+            try {
+                const response = await fetch('http://localhost:5000/api/market/historical/NIFTY%2050?period=5d&interval=15m');
+                if (!response.ok) throw new Error('Backend error');
+                const data = await response.json();
+                if (data && data.length > 0) {
+                    console.log('✅ Using REAL data from backend');
+                    return data;
+                }
+                throw new Error('No data');
+            } catch (error) {
+                console.log('⚠️ Backend not available, using mock data');
+                return generateMockData(100);
+            }
+        }
+
+        // ============================================================
+        // 3. CREATE CHART (Lightweight Charts)
+        // ============================================================
+        const chartContainer = document.getElementById('chart-container');
+
+        const chart = LightweightCharts.createChart(chartContainer, {
+            width: chartContainer.clientWidth,
+            height: chartContainer.clientHeight,
+            layout: {
+                background: { color: '#0f1620' },
+                textColor: '#8a9bb5',
+            },
+            grid: {
+                vertLines: { color: '#1a2433' },
+                horzLines: { color: '#1a2433' },
+            },
+            crosshair: {
+                mode: LightweightCharts.CrosshairMode.Normal,
+            },
+            rightPriceScale: {
+                borderColor: '#2a3a4e',
+            },
+            timeScale: {
+                borderColor: '#2a3a4e',
+                timeVisible: true,
+                secondsVisible: false,
+            },
+        });
+
+        // ============================================================
+        // 4. ADD CANDLE SERIES
+        // ============================================================
+        const candleSeries = chart.addCandlestickSeries({
+            upColor: '#22c55e',
+            downColor: '#ef4444',
+            borderUpColor: '#22c55e',
+            borderDownColor: '#ef4444',
+            wickUpColor: '#22c55e',
+            wickDownColor: '#ef4444',
+        });
+
+        let currentData = [];
+
+        // ============================================================
+        // 5. CALCULATE EMA
+        // ============================================================
+        function calculateEMA(data, period = 20) {
+            const ema = [];
+            const multiplier = 2 / (period + 1);
+
+            for (let i = 0; i < data.length; i++) {
+                if (i < period - 1) {
+                    ema.push(null);
+                    continue;
+                }
+                if (i === period - 1) {
+                    let sum = 0;
+                    for (let j = 0; j < period; j++) {
+                        sum += data[j].close;
+                    }
+                    ema.push(sum / period);
+                } else {
+                    ema.push((data[i].close - ema[i - 1]) * multiplier + ema[i - 1]);
+                }
+            }
+            return ema;
+        }
+
+        let emaSeries = null;
+
+        function updateEMA(data) {
+            if (emaSeries) {
+                chart.removeSeries(emaSeries);
+            }
+            const emaValues = calculateEMA(data, 20);
+            const emaData = data.map((d, i) => ({
+                time: d.time,
+                value: emaValues[i],
+            })).filter(d => d.value !== null);
+
+            emaSeries = chart.addLineSeries({
+                color: '#3b82f6',
+                lineWidth: 2,
+                priceLineVisible: false,
+                lastValueVisible: false,
+                crosshairMarkerVisible: false,
+            });
+            emaSeries.setData(emaData);
+        }
+
+        // ============================================================
+        // 6. ADD BUY/SELL MARKERS
+        // ============================================================
+        function updateMarkers(data) {
+            const markers = [];
+            for (let i = 20; i < data.length - 10; i += 25 + Math.floor(Math.random() * 15)) {
+                const isBuy = Math.random() > 0.5;
+                markers.push({
+                    time: data[i].time,
+                    position: isBuy ? 'belowBar' : 'aboveBar',
+                    color: isBuy ? '#22c55e' : '#ef4444',
+                    shape: isBuy ? 'arrowUp' : 'arrowDown',
+                    text: isBuy ? 'BUY' : 'SELL',
+                    size: 1,
+                });
+            }
+            candleSeries.setMarkers(markers);
+        }
+
+        // ============================================================
+        // 7. LOAD DATA
+        // ============================================================
+        async function loadData() {
+            currentData = await fetchCandleData();
+            candleSeries.setData(currentData);
+            updateEMA(currentData);
+            updateMarkers(currentData);
+
+            if (currentData.length > 0) {
+                const last = currentData[currentData.length - 1];
+                document.getElementById('currentPrice').textContent = last.close.toFixed(2);
+            }
+        }
+
+        // ============================================================
+        // 8. PRICE DISPLAY ON HOVER
+        // ============================================================
+        const priceElement = document.getElementById('currentPrice');
+        const changeElement = document.getElementById('currentChange');
+
+        chart.subscribeCrosshairMove((param) => {
+            if (param.time && param.point) {
+                const dataPoint = param.seriesData.get(candleSeries);
+                if (dataPoint) {
+                    const price = dataPoint.close;
+                    priceElement.textContent = price.toFixed(2);
+                    if (currentData.length > 0) {
+                        const firstPrice = currentData[0].close;
+                        const change = price - firstPrice;
+                        const changePercent = (change / firstPrice) * 100;
+                        changeElement.textContent =
+                            `${change >= 0 ? '▲' : '▼'} ${change >= 0 ? '+' : ''}${change.toFixed(2)} (${changePercent.toFixed(2)}%)`;
+                        changeElement.className = `change ${change >= 0 ? 'green' : 'red'}`;
+                    }
+                }
+            }
+        });
+
+        // ============================================================
+        // 9. TIMEFRAME BUTTONS
+        // ============================================================
+        document.querySelectorAll('.timeframes button').forEach(btn => {
+            btn.addEventListener('click', async function() {
+                document.querySelectorAll('.timeframes button').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+
+                const tf = this.textContent;
+                const interval = tf === '1m' ? '1m' :
+                    tf === '5m' ? '5m' :
+                    tf === '15m' ? '15m' :
+                    tf === '1h' ? '1h' : '1d';
+                const period = tf === '1d' ? '1mo' : '5d';
+
+                try {
+                    const response = await fetch(`http://localhost:5000/api/market/historical/NIFTY%2050?period=${period}&interval=${interval}`);
+                    if (response.ok) {
+                        const data = await response.json();
+                        if (data && data.length > 0) {
+                            currentData = data;
+                            candleSeries.setData(data);
+                            updateEMA(data);
+                            updateMarkers(data);
+                            showToast(`Timeframe changed to ${tf}`);
+                            return;
+                        }
+                    }
+                } catch (error) {
+                    console.log('Backend error, using mock data');
+                }
+
+                const newData = generateMockData(tf === '1m' ? 60 : tf === '5m' ? 100 : tf === '15m' ? 200 : tf === '1h' ? 300 : 400);
+                currentData = newData;
+                candleSeries.setData(newData);
+                updateEMA(newData);
+                updateMarkers(newData);
+                showToast(`Timeframe changed to ${tf} (mock data)`);
+            });
+        });
+
+        // ============================================================
+        // 10. INDICATOR TOGGLES
+        // ============================================================
+        document.querySelectorAll('.bottom-bar .indicators span').forEach(indicator => {
+            indicator.addEventListener('click', function() {
+                this.classList.toggle('active');
+                const name = this.textContent.trim();
+
+                if (name.includes('EMA') && emaSeries) {
+                    emaSeries.applyOptions({
+                        visible: this.classList.contains('active'),
+                    });
+                }
+
+                showToast(`${this.classList.contains('active') ? '✅' : '❌'} ${name} ${this.classList.contains('active') ? 'enabled' : 'disabled'}`);
+            });
+        });
+
+        // ============================================================
+        // 11. RESIZE HANDLER
+        // ============================================================
+        function handleResize() {
+            const container = document.getElementById('chart-container');
+            chart.applyOptions({
+                width: container.clientWidth,
+                height: container.clientHeight,
+            });
+        }
+
+        let resizeTimeout;
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(handleResize, 200);
+        });
+
+        // ============================================================
+        // 12. TOAST
+        // ============================================================
+        function showToast(message) {
+            const existing = document.querySelector('.toast');
+            if (existing) existing.remove();
+
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.textContent = message;
+            document.body.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transition = 'opacity 0.3s ease';
+                setTimeout(() => toast.remove(), 300);
+            }, 2500);
+        }
+
+        // ============================================================
+        // 13. INITIALIZE
+        // ============================================================
+        document.addEventListener('DOMContentLoaded', async function() {
+            await loadData();
+            showToast('📊 Interactive Chart Ready!');
+            console.log('📊 KJs TRD Interactive Chart Loaded!');
+        });
+    </script>
+
+</body>
+</html>
