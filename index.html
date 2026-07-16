@@ -1,0 +1,1417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>KJs TRD Trading Terminal</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        :root {
+            --bg-primary: #0b0e14;
+            --bg-secondary: #131a24;
+            --bg-panel: #0f1620;
+            --bg-card: #1a2433;
+            --bg-hover: #1e2a3d;
+            --border-color: #2a3a4e;
+            --text-primary: #e8edf5;
+            --text-secondary: #8a9bb5;
+            --text-muted: #5a6f8a;
+            --accent-blue: #3b82f6;
+            --accent-green: #22c55e;
+            --accent-red: #ef4444;
+            --accent-yellow: #eab308;
+            --accent-purple: #8b5cf6;
+            --radius: 8px;
+            --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        html,
+        body {
+            height: 100%;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: var(--font);
+            font-size: 14px;
+            overflow: hidden;
+        }
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--bg-secondary);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 4px;
+        }
+        #app {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+        }
+        #topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+            padding: 0 18px;
+            height: 48px;
+            flex-shrink: 0;
+            z-index: 100;
+        }
+        #topbar .logo {
+            font-weight: 700;
+            font-size: 16px;
+            color: var(--text-primary);
+        }
+        #topbar .logo span {
+            color: var(--accent-blue);
+        }
+        #topbar .logo small {
+            font-weight: 400;
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+        #topbar .topbar-actions {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        #topbar .topbar-actions .status {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+        #topbar .topbar-actions .status .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--accent-green);
+            animation: pulse-dot 2s infinite;
+        }
+        @keyframes pulse-dot {
+            0%,
+            100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.3;
+            }
+        }
+        #topbar .topbar-actions .broker-status {
+            font-size: 12px;
+            color: var(--accent-green);
+            background: rgba(34, 197, 94, 0.12);
+            padding: 4px 12px;
+            border-radius: 20px;
+            border: 1px solid rgba(34, 197, 94, 0.2);
+        }
+        #topbar .topbar-actions .timeframe-selector {
+            display: flex;
+            gap: 2px;
+            background: var(--bg-primary);
+            border-radius: 6px;
+            padding: 2px;
+            border: 1px solid var(--border-color);
+        }
+        #topbar .topbar-actions .timeframe-selector button {
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: 0.25s ease;
+        }
+        #topbar .topbar-actions .timeframe-selector button:hover {
+            color: var(--text-primary);
+            background: var(--bg-hover);
+        }
+        #topbar .topbar-actions .timeframe-selector button.active {
+            background: var(--accent-blue);
+            color: #fff;
+        }
+        #topbar .topbar-actions .symbol-input {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 4px 12px;
+            color: var(--text-primary);
+            font-size: 13px;
+            font-weight: 500;
+            width: 120px;
+            outline: none;
+        }
+        #topbar .topbar-actions .symbol-input:focus {
+            border-color: var(--accent-blue);
+        }
+        #main {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+        #sidebar {
+            width: 210px;
+            min-width: 210px;
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+        #sidebar .nav-section {
+            padding: 12px 14px 4px 14px;
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+        #sidebar .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px 16px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: 0.25s ease;
+            border-left: 3px solid transparent;
+            font-size: 13px;
+        }
+        #sidebar .nav-item:hover {
+            background: var(--bg-hover);
+            color: var(--text-primary);
+        }
+        #sidebar .nav-item.active {
+            background: rgba(59, 130, 246, 0.08);
+            color: var(--accent-blue);
+            border-left-color: var(--accent-blue);
+        }
+        #sidebar .nav-item .icon {
+            font-size: 16px;
+            width: 22px;
+            text-align: center;
+        }
+        #sidebar .nav-divider {
+            height: 1px;
+            background: var(--border-color);
+            margin: 6px 16px;
+        }
+        #content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: var(--bg-primary);
+            overflow: hidden;
+        }
+        .page {
+            display: none;
+            flex: 1;
+            overflow: hidden;
+            padding: 16px;
+            gap: 16px;
+        }
+        .page.active {
+            display: flex;
+        }
+        #page-dashboard {
+            flex-direction: column;
+            gap: 16px;
+        }
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 14px;
+        }
+        .stat-card {
+            background: var(--bg-panel);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            padding: 16px 18px;
+        }
+        .stat-card .label {
+            font-size: 11px;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+        .stat-card .value {
+            font-size: 22px;
+            font-weight: 700;
+            margin-top: 4px;
+            color: var(--text-primary);
+        }
+        .stat-card .value.green {
+            color: var(--accent-green);
+        }
+        .stat-card .value.red {
+            color: var(--accent-red);
+        }
+        .stat-card .value.blue {
+            color: var(--accent-blue);
+        }
+        .stat-card .value.yellow {
+            color: var(--accent-yellow);
+        }
+        .dashboard-bottom {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 14px;
+            flex: 1;
+        }
+        .panel-card {
+            background: var(--bg-panel);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            padding: 16px;
+            overflow: auto;
+        }
+        .panel-card .panel-title {
+            font-size: 12px;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+        .panel-card .panel-title .badge {
+            background: var(--accent-blue);
+            color: #fff;
+            font-size: 10px;
+            padding: 1px 10px;
+            border-radius: 20px;
+            margin-left: 8px;
+        }
+        .log-entry {
+            padding: 4px 0;
+            font-size: 12px;
+            color: var(--text-secondary);
+            border-bottom: 1px solid rgba(42, 58, 78, 0.3);
+            font-family: 'Courier New', monospace;
+        }
+        .log-entry .time {
+            color: var(--text-muted);
+            margin-right: 10px;
+        }
+        .log-entry .msg-green {
+            color: var(--accent-green);
+        }
+        .log-entry .msg-red {
+            color: var(--accent-red);
+        }
+        .log-entry .msg-yellow {
+            color: var(--accent-yellow);
+        }
+        .log-entry .msg-blue {
+            color: var(--accent-blue);
+        }
+        #page-chart {
+            padding: 0;
+            flex-direction: column;
+            background: #0f1620;
+        }
+        .chart-toolbar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+            flex-shrink: 0;
+            flex-wrap: wrap;
+        }
+        .chart-toolbar .toolbar-group {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+            padding-right: 12px;
+            border-right: 1px solid var(--border-color);
+        }
+        .chart-toolbar .toolbar-group:last-child {
+            border-right: none;
+        }
+        .chart-toolbar button {
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: 0.25s ease;
+            font-weight: 500;
+        }
+        .chart-toolbar button:hover {
+            background: var(--bg-hover);
+            color: var(--text-primary);
+        }
+        .chart-toolbar button.active {
+            background: var(--accent-blue);
+            color: #fff;
+        }
+        .chart-toolbar .indicator-badge {
+            background: rgba(139, 92, 246, 0.15);
+            color: var(--accent-purple);
+            padding: 2px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            border: 1px solid rgba(139, 92, 246, 0.2);
+        }
+        .chart-container {
+            flex: 1;
+            background: var(--bg-panel);
+            position: relative;
+            overflow: hidden;
+        }
+        .chart-container canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+        .chart-overlay {
+            position: absolute;
+            top: 16px;
+            left: 20px;
+            font-size: 12px;
+            color: var(--text-muted);
+            pointer-events: none;
+            font-weight: 500;
+        }
+        .chart-overlay .price {
+            color: var(--text-primary);
+            font-size: 18px;
+            font-weight: 700;
+        }
+        .chart-overlay .change {
+            font-size: 14px;
+            font-weight: 600;
+        }
+        .chart-overlay .change.green {
+            color: var(--accent-green);
+        }
+        .chart-overlay .change.red {
+            color: var(--accent-red);
+        }
+        #page-python {
+            flex-direction: row;
+            gap: 0;
+            padding: 0;
+        }
+        .studio-editor {
+            flex: 1;
+            background: var(--bg-panel);
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid var(--border-color);
+        }
+        .studio-editor .editor-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 16px;
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+            flex-shrink: 0;
+        }
+        .studio-editor .editor-header .file-name {
+            font-weight: 500;
+            font-size: 13px;
+            color: var(--text-primary);
+        }
+        .studio-editor .editor-header .file-name .ext {
+            color: var(--text-muted);
+        }
+        .studio-editor .editor-header .actions {
+            display: flex;
+            gap: 6px;
+        }
+        .studio-editor .editor-header .actions button {
+            padding: 4px 14px;
+            border-radius: 4px;
+            border: none;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: 0.25s ease;
+        }
+        .btn-primary {
+            background: var(--accent-blue);
+            color: #fff;
+        }
+        .btn-primary:hover {
+            background: #2563eb;
+        }
+        .btn-success {
+            background: var(--accent-green);
+            color: #fff;
+        }
+        .btn-success:hover {
+            background: #16a34a;
+        }
+        .btn-danger {
+            background: var(--accent-red);
+            color: #fff;
+        }
+        .btn-danger:hover {
+            background: #dc2626;
+        }
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+        }
+        .btn-outline:hover {
+            border-color: var(--text-muted);
+            color: var(--text-primary);
+        }
+        .studio-editor textarea {
+            flex: 1;
+            background: #0a0e14;
+            border: none;
+            color: #d4dcec;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            padding: 16px;
+            resize: none;
+            outline: none;
+            line-height: 1.7;
+        }
+        .studio-output {
+            width: 320px;
+            min-width: 320px;
+            background: var(--bg-secondary);
+            display: flex;
+            flex-direction: column;
+            border-left: 1px solid var(--border-color);
+        }
+        .studio-output .output-header {
+            padding: 10px 16px;
+            background: var(--bg-panel);
+            border-bottom: 1px solid var(--border-color);
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            flex-shrink: 0;
+        }
+        .studio-output .output-body {
+            flex: 1;
+            padding: 12px 16px;
+            overflow: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            color: var(--text-secondary);
+            line-height: 1.8;
+        }
+        .studio-output .output-body .success {
+            color: var(--accent-green);
+        }
+        .studio-output .output-body .error {
+            color: var(--accent-red);
+        }
+        .studio-output .output-body .info {
+            color: var(--accent-blue);
+        }
+        .studio-output .output-body .warn {
+            color: var(--accent-yellow);
+        }
+        #page-modules {
+            flex-direction: column;
+            gap: 16px;
+        }
+        .module-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 14px;
+            flex: 1;
+            overflow: auto;
+            align-content: start;
+        }
+        .module-card {
+            background: var(--bg-panel);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            padding: 16px;
+            transition: 0.25s ease;
+        }
+        .module-card:hover {
+            border-color: var(--text-muted);
+        }
+        .module-card .module-name {
+            font-weight: 600;
+            font-size: 15px;
+            color: var(--text-primary);
+        }
+        .module-card .module-type {
+            font-size: 11px;
+            color: var(--accent-blue);
+            text-transform: uppercase;
+            font-weight: 500;
+            background: rgba(59, 130, 246, 0.1);
+            padding: 1px 10px;
+            border-radius: 20px;
+            display: inline-block;
+            margin-top: 4px;
+        }
+        .module-card .module-desc {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-top: 8px;
+        }
+        .module-card .module-status {
+            margin-top: 12px;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .module-card .module-status .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+        .module-card .module-status .status-dot.running {
+            background: var(--accent-green);
+        }
+        .module-card .module-status .status-dot.stopped {
+            background: var(--text-muted);
+        }
+        .module-card .module-status .status-dot.paused {
+            background: var(--accent-yellow);
+        }
+        .module-card .module-actions {
+            margin-top: 12px;
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+        .module-card .module-actions button {
+            padding: 3px 12px;
+            border-radius: 4px;
+            border: none;
+            font-size: 11px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: 0.25s ease;
+            background: var(--bg-hover);
+            color: var(--text-secondary);
+        }
+        .module-card .module-actions button:hover {
+            background: var(--bg-card);
+            color: var(--text-primary);
+        }
+        .module-card .module-actions button.run {
+            background: rgba(34, 197, 94, 0.15);
+            color: var(--accent-green);
+        }
+        .module-card .module-actions button.run:hover {
+            background: rgba(34, 197, 94, 0.25);
+        }
+        .module-card .module-actions button.stop {
+            background: rgba(239, 68, 68, 0.15);
+            color: var(--accent-red);
+        }
+        .module-card .module-actions button.stop:hover {
+            background: rgba(239, 68, 68, 0.25);
+        }
+        .placeholder-page {
+            display: flex !important;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-muted);
+            flex: 1;
+        }
+        .placeholder-page .placeholder-content {
+            text-align: center;
+        }
+        .placeholder-page .placeholder-content .icon {
+            font-size: 48px;
+            margin-bottom: 12px;
+        }
+        .placeholder-page .placeholder-content h3 {
+            color: var(--text-secondary);
+        }
+        .placeholder-page .placeholder-content p {
+            font-size: 13px;
+            max-width: 400px;
+        }
+        .page-content {
+            display: flex;
+            flex-direction: column;
+            padding: 24px 32px;
+            flex: 1;
+            color: var(--text-secondary);
+        }
+        .page-content h2 {
+            font-size: 22px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+        .page-content p {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 16px;
+        }
+        .page-content .btn {
+            padding: 8px 20px;
+            border-radius: 6px;
+            border: none;
+            font-weight: 500;
+            cursor: pointer;
+            width: fit-content;
+            transition: 0.25s ease;
+        }
+        .page-content .btn-primary {
+            background: var(--accent-blue);
+            color: #fff;
+        }
+        .page-content .btn-primary:hover {
+            background: #2563eb;
+        }
+        .page-content .btn-success {
+            background: var(--accent-green);
+            color: #fff;
+        }
+        .page-content .btn-success:hover {
+            background: #16a34a;
+        }
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: var(--bg-panel);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 12px 20px;
+            border-radius: var(--radius);
+            font-size: 13px;
+            z-index: 9999;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.6);
+            animation: slideUp 0.3s ease;
+            max-width: 350px;
+        }
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        @media (max-width: 1200px) {
+            .dashboard-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .dashboard-bottom {
+                grid-template-columns: 1fr;
+            }
+            #sidebar {
+                width: 56px;
+                min-width: 56px;
+            }
+            #sidebar .nav-item span:not(.icon) {
+                display: none;
+            }
+            #sidebar .nav-item {
+                padding: 10px;
+                justify-content: center;
+            }
+            #sidebar .nav-section {
+                display: none;
+            }
+            .studio-output {
+                width: 200px;
+                min-width: 200px;
+            }
+            #topbar .topbar-actions .timeframe-selector {
+                display: none;
+            }
+        }
+        @media (max-width: 768px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+            #sidebar {
+                display: none;
+            }
+            .studio-output {
+                display: none;
+            }
+            #topbar .topbar-actions .symbol-input {
+                width: 80px;
+            }
+            #topbar .topbar-actions .broker-status {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="app">
+
+        <!-- TOP BAR -->
+        <header id="topbar">
+            <div class="logo">📈 KJs <span>TRD</span> <small>| Trading OS</small></div>
+            <div class="topbar-actions">
+                <div class="status"><span class="dot"></span> Live</div>
+                <span class="broker-status">🔗 Dhan Connected</span>
+                <input class="symbol-input" type="text" value="NIFTY 50" />
+                <div class="timeframe-selector">
+                    <button>1m</button>
+                    <button>5m</button>
+                    <button class="active">15m</button>
+                    <button>1h</button>
+                    <button>1d</button>
+                </div>
+            </div>
+        </header>
+
+        <!-- MAIN -->
+        <div id="main">
+
+            <!-- SIDEBAR -->
+            <nav id="sidebar">
+                <div class="nav-section">Navigation</div>
+                <div class="nav-item active" data-page="dashboard"><span class="icon">📊</span><span>Dashboard</span></div>
+                <div class="nav-item" data-page="chart"><span class="icon">📈</span><span>Chart</span></div>
+                <div class="nav-item" data-page="python"><span class="icon">🐍</span><span>Python Studio</span></div>
+                <div class="nav-item" data-page="modules"><span class="icon">📦</span><span>Module Library</span></div>
+                <div class="nav-divider"></div>
+                <div class="nav-section">Tools</div>
+                <div class="nav-item" data-page="watchlist"><span class="icon">👁️</span><span>Watchlists</span></div>
+                <div class="nav-item" data-page="screener"><span class="icon">🔍</span><span>Screener</span></div>
+                <div class="nav-item" data-page="backtest"><span class="icon">⏪</span><span>Backtesting</span></div>
+                <div class="nav-item" data-page="paper"><span class="icon">📄</span><span>Paper Trading</span></div>
+                <div class="nav-divider"></div>
+                <div class="nav-section">System</div>
+                <div class="nav-item" data-page="automation"><span class="icon">🤖</span><span>Automation</span></div>
+                <div class="nav-item" data-page="orders"><span class="icon">🛒</span><span>Orders</span></div>
+                <div class="nav-item" data-page="portfolio"><span class="icon">💼</span><span>Portfolio</span></div>
+                <div class="nav-item" data-page="notifications"><span class="icon">🔔</span><span>Notifications</span></div>
+                <div class="nav-divider"></div>
+                <div class="nav-item" data-page="settings"><span class="icon">⚙️</span><span>Settings</span></div>
+                <div class="nav-item" data-page="logs"><span class="icon">📋</span><span>Logs</span></div>
+                <div class="nav-item" data-page="reports"><span class="icon">📄</span><span>Reports</span></div>
+            </nav>
+
+            <!-- CONTENT -->
+            <div id="content">
+
+                <!-- ===== DASHBOARD ===== -->
+                <div id="page-dashboard" class="page active">
+                    <div class="dashboard-grid">
+                        <div class="stat-card"><div class="label">Running Modules</div><div class="value blue">4</div></div>
+                        <div class="stat-card"><div class="label">Today's P&L</div><div class="value green">+₹12,450</div></div>
+                        <div class="stat-card"><div class="label">Open Positions</div><div class="value yellow">3</div></div>
+                        <div class="stat-card"><div class="label">Notifications Today</div><div class="value blue">18</div></div>
+                    </div>
+                    <div class="dashboard-bottom">
+                        <div class="panel-card">
+                            <div class="panel-title">📊 Recent Activity</div>
+                            <div class="log-entry"><span class="time">09:45</span><span class="msg-green">BUY Signal</span> — NIFTY 50 @ 22,450</div>
+                            <div class="log-entry"><span class="time">09:30</span><span class="msg-yellow">Strategy Started</span> — MomentumBreakout</div>
+                            <div class="log-entry"><span class="time">09:15</span><span class="msg-blue">Paper Trade Opened</span> — BANKNIFTY @ 48,200</div>
+                            <div class="log-entry"><span class="time">09:00</span><span class="msg-green">Market Open</span> — All systems ready</div>
+                            <div class="log-entry"><span class="time">08:45</span><span class="msg-red">SELL Signal</span> — RELIANCE @ 2,850</div>
+                        </div>
+                        <div class="panel-card">
+                            <div class="panel-title">⚡ System Status <span class="badge">All Good</span></div>
+                            <div class="log-entry"><span class="msg-green">●</span> Runtime Engine: Running</div>
+                            <div class="log-entry"><span class="msg-green">●</span> Market Data: Connected</div>
+                            <div class="log-entry"><span class="msg-green">●</span> Broker: Dhan (Live)</div>
+                            <div class="log-entry"><span class="msg-green">●</span> Notification: Telegram</div>
+                            <div class="log-entry"><span class="msg-green">●</span> Database: Connected</div>
+                            <div class="log-entry" style="margin-top:8px;color:var(--text-muted);font-size:11px;">Uptime: 2h 14m · Memory: 342MB</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ===== CHART ===== -->
+                <div id="page-chart" class="page">
+                    <div class="chart-toolbar">
+                        <div class="toolbar-group">
+                            <button class="active">📊 Candle</button>
+                            <button>📈 Line</button>
+                            <button>📉 Area</button>
+                        </div>
+                        <div class="toolbar-group">
+                            <button>↩️</button>
+                            <button>↪️</button>
+                            <button>➕</button>
+                            <button>➖</button>
+                            <button>⬜</button>
+                        </div>
+                        <div class="toolbar-group">
+                            <button>📐 Trendline</button>
+                            <button>🔲 Rectangle</button>
+                            <button>💬 Label</button>
+                        </div>
+                        <div class="toolbar-group" style="border-right:none;">
+                            <span class="indicator-badge">📊 VWAP</span>
+                            <span class="indicator-badge">📈 EMA 20</span>
+                            <span class="indicator-badge">📉 RSI</span>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="chartCanvas"></canvas>
+                        <div class="chart-overlay">
+                            <div>NIFTY 50 · 15m</div>
+                            <div class="price" id="chartPrice">22,450.75</div>
+                            <div class="change green" id="chartChange">▲ +142.30 (+0.64%)</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ===== PYTHON STUDIO ===== -->
+                <div id="page-python" class="page">
+                    <div class="studio-editor">
+                        <div class="editor-header">
+                            <span class="file-name">MomentumBreakout<span class="ext">.py</span></span>
+                            <div class="actions">
+                                <button class="btn-primary">💾 Save</button>
+                                <button class="btn-success">▶ Run</button>
+                                <button class="btn-outline">⏹ Stop</button>
+                                <button class="btn-outline">📋 Duplicate</button>
+                                <button class="btn-danger">🗑 Delete</button>
+                            </div>
+                        </div>
+                        <textarea>"""
+Momentum Breakout Strategy
+Detects when price breaks above previous high with volume.
+"""
+
+from platform import Module, Candle, Signal
+
+class MomentumBreakout(Module):
+    name = "Momentum Breakout"
+    type = "strategy"
+    version = "1.0.0"
+    author = "KJ"
+    description = "Buys when price breaks above 20-period high"
+
+    def __init__(self):
+        self.period = 20
+        self.volume_threshold = 1.5
+
+    def on_candle(self, candle: Candle, context):
+        high_20 = max(context.candles[-20:], key=lambda x: x.high).high
+        
+        if candle.close > high_20:
+            avg_volume = sum(c.volume for c in context.candles[-20:]) / 20
+            if candle.volume > avg_volume * self.volume_threshold:
+                return Signal.BUY, {
+                    "reason": "Breakout above 20H with volume",
+                    "price": candle.close
+                }
+        return None, None
+
+    def on_tick(self, tick):
+        pass
+
+    def on_stop(self):
+        pass
+</textarea>
+                    </div>
+                    <div class="studio-output">
+                        <div class="output-header">📋 Console Output</div>
+                        <div class="output-body" id="consoleOutput">
+                            <div class="info">[10:00:00] Module 'MomentumBreakout' loaded</div>
+                            <div class="info">[10:00:01] Runtime Engine initialized</div>
+                            <div class="info">[10:00:02] Market data subscribed: NIFTY 50</div>
+                            <div class="success">[10:00:05] Strategy started successfully</div>
+                            <div class="info">[10:00:30] New candle received</div>
+                            <div class="info">[10:00:30] Period high: 22,450.75</div>
+                            <div class="success">[10:00:30] BUY signal generated!</div>
+                            <div class="info">[10:00:31] 📨 BUY_SIGNAL event published</div>
+                            <div class="info">[10:00:31] 📊 Chart Engine: Drawing BUY arrow</div>
+                            <div class="info">[10:00:31] 📄 Paper Trade: Order placed</div>
+                            <div class="info">[10:00:31] 🔔 Notification sent via Telegram</div>
+                            <div class="warn">[10:00:35] ⚠️ Stop loss: 22,350</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ===== MODULE LIBRARY ===== -->
+                <div id="page-modules" class="page">
+                    <div style="display:flex;justify-content:space-between;align-items:center;flex-shrink:0;">
+                        <h2 style="font-size:18px;font-weight:600;">📦 Module Library</h2>
+                        <button class="btn-primary" style="padding:6px 18px;" onclick="createNewModule()">+ New Module</button>
+                    </div>
+                    <div class="module-grid">
+                        <div class="module-card">
+                            <div class="module-name">Momentum Breakout</div>
+                            <div class="module-type">Strategy</div>
+                            <div class="module-desc">Buys on breakout above 20H with volume confirmation</div>
+                            <div class="module-status"><span class="status-dot running"></span> Running <span style="color:var(--text-muted);margin-left:8px;">v1.0.0</span></div>
+                            <div class="module-actions">
+                                <button class="run" onclick="runModule('Momentum Breakout')">▶ Run</button>
+                                <button class="stop" onclick="stopModule('Momentum Breakout')">⏹ Stop</button>
+                                <button onclick="pauseModule('Momentum Breakout')">⏸ Pause</button>
+                                <button onclick="editModule('Momentum Breakout')">📋 Edit</button>
+                                <button onclick="backtestModule('Momentum Breakout')">⏪ Backtest</button>
+                            </div>
+                        </div>
+                        <div class="module-card">
+                            <div class="module-name">Previous Day Breakout</div>
+                            <div class="module-type">Strategy</div>
+                            <div class="module-desc">Trades breakouts above yesterday's high</div>
+                            <div class="module-status"><span class="status-dot running"></span> Running <span style="color:var(--text-muted);margin-left:8px;">v2.1.0</span></div>
+                            <div class="module-actions">
+                                <button class="run" onclick="runModule('Previous Day Breakout')">▶ Run</button>
+                                <button class="stop" onclick="stopModule('Previous Day Breakout')">⏹ Stop</button>
+                                <button onclick="pauseModule('Previous Day Breakout')">⏸ Pause</button>
+                                <button onclick="editModule('Previous Day Breakout')">📋 Edit</button>
+                                <button onclick="backtestModule('Previous Day Breakout')">⏪ Backtest</button>
+                            </div>
+                        </div>
+                        <div class="module-card">
+                            <div class="module-name">EMA Ribbon</div>
+                            <div class="module-type">Indicator</div>
+                            <div class="module-desc">Multiple EMA lines for trend confirmation</div>
+                            <div class="module-status"><span class="status-dot running"></span> Running <span style="color:var(--text-muted);margin-left:8px;">v1.2.0</span></div>
+                            <div class="module-actions">
+                                <button class="run" onclick="runModule('EMA Ribbon')">▶ Run</button>
+                                <button class="stop" onclick="stopModule('EMA Ribbon')">⏹ Stop</button>
+                                <button onclick="editModule('EMA Ribbon')">📋 Edit</button>
+                            </div>
+                        </div>
+                        <div class="module-card">
+                            <div class="module-name">Momentum Scanner</div>
+                            <div class="module-type">Screener</div>
+                            <div class="module-desc">Scans for momentum stocks across watchlist</div>
+                            <div class="module-status"><span class="status-dot stopped"></span> Stopped <span style="color:var(--text-muted);margin-left:8px;">v1.0.0</span></div>
+                            <div class="module-actions">
+                                <button class="run" onclick="runModule('Momentum Scanner')">▶ Run</button>
+                                <button onclick="editModule('Momentum Scanner')">📋 Edit</button>
+                                <button onclick="backtestModule('Momentum Scanner')">⏪ Backtest</button>
+                            </div>
+                        </div>
+                        <div class="module-card">
+                            <div class="module-name">VWAP Alert</div>
+                            <div class="module-type">Alert</div>
+                            <div class="module-desc">Alerts when price crosses VWAP</div>
+                            <div class="module-status"><span class="status-dot paused"></span> Paused <span style="color:var(--text-muted);margin-left:8px;">v1.0.0</span></div>
+                            <div class="module-actions">
+                                <button class="run" onclick="runModule('VWAP Alert')">▶ Run</button>
+                                <button onclick="resumeModule('VWAP Alert')">▶️ Resume</button>
+                                <button onclick="editModule('VWAP Alert')">📋 Edit</button>
+                            </div>
+                        </div>
+                        <div class="module-card">
+                            <div class="module-name">Institution Detector</div>
+                            <div class="module-type">Strategy</div>
+                            <div class="module-desc">Detects institutional buying patterns</div>
+                            <div class="module-status"><span class="status-dot stopped"></span> Stopped <span style="color:var(--text-muted);margin-left:8px;">v0.9.0</span></div>
+                            <div class="module-actions">
+                                <button class="run" onclick="runModule('Institution Detector')">▶ Run</button>
+                                <button onclick="editModule('Institution Detector')">📋 Edit</button>
+                                <button onclick="backtestModule('Institution Detector')">⏪ Backtest</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ===== WATCHLISTS ===== -->
+                <div id="page-watchlist" class="page">
+                    <div class="page-content">
+                        <h2>👁️ Watchlists</h2>
+                        <p>Manage your watchlists. Add symbols, create groups, and monitor your favorite stocks.</p>
+                        <button class="btn btn-primary" onclick="showToast('Watchlists: Create Watchlist clicked')">+ Create Watchlist</button>
+                    </div>
+                </div>
+
+                <!-- ===== SCREENER ===== -->
+                <div id="page-screener" class="page">
+                    <div class="page-content">
+                        <h2>🔍 Screener</h2>
+                        <p>Build dynamic stock lists using Python screeners. Find momentum, breakouts, and more.</p>
+                        <button class="btn btn-primary" onclick="showToast('Screener: New Screener clicked')">+ New Screener</button>
+                    </div>
+                </div>
+
+                <!-- ===== BACKTESTING ===== -->
+                <div id="page-backtest" class="page">
+                    <div class="page-content">
+                        <h2>⏪ Backtesting</h2>
+                        <p>Test your strategies on historical data. View performance metrics and equity curves.</p>
+                        <button class="btn btn-primary" onclick="showToast('Backtesting: New Backtest clicked')">+ New Backtest</button>
+                    </div>
+                </div>
+
+                <!-- ===== PAPER TRADING ===== -->
+                <div id="page-paper" class="page">
+                    <div class="page-content">
+                        <h2>📄 Paper Trading</h2>
+                        <p>Trade without real money. Test your strategies in a risk-free environment.</p>
+                        <button class="btn btn-success" onclick="showToast('Paper Trading: Start Paper Trading clicked')">▶ Start Paper Trading</button>
+                    </div>
+                </div>
+
+                <!-- ===== AUTOMATION ===== -->
+                <div id="page-automation" class="page">
+                    <div class="page-content">
+                        <h2>🤖 Automation</h2>
+                        <p>Configure automated trading rules. Set risk limits, position sizing, and execution rules.</p>
+                        <button class="btn btn-primary" onclick="showToast('Automation: New Automation Rule clicked')">+ New Automation Rule</button>
+                    </div>
+                </div>
+
+                <!-- ===== ORDERS ===== -->
+                <div id="page-orders" class="page">
+                    <div class="page-content">
+                        <h2>🛒 Orders</h2>
+                        <p>View all your orders — pending, executed, and cancelled.</p>
+                    </div>
+                </div>
+
+                <!-- ===== PORTFOLIO ===== -->
+                <div id="page-portfolio" class="page">
+                    <div class="page-content">
+                        <h2>💼 Portfolio</h2>
+                        <p>Track your holdings, P&L, and portfolio performance.</p>
+                    </div>
+                </div>
+
+                <!-- ===== NOTIFICATIONS ===== -->
+                <div id="page-notifications" class="page">
+                    <div class="page-content">
+                        <h2>🔔 Notifications</h2>
+                        <p>View all notifications from Telegram, WhatsApp, Email, and more.</p>
+                    </div>
+                </div>
+
+                <!-- ===== SETTINGS ===== -->
+                <div id="page-settings" class="page">
+                    <div class="page-content">
+                        <h2>⚙️ Settings</h2>
+                        <p>Configure your platform preferences, broker accounts, and API keys.</p>
+                    </div>
+                </div>
+
+                <!-- ===== LOGS ===== -->
+                <div id="page-logs" class="page">
+                    <div class="page-content">
+                        <h2>📋 Logs</h2>
+                        <p>View system logs, module logs, and error traces.</p>
+                    </div>
+                </div>
+
+                <!-- ===== REPORTS ===== -->
+                <div id="page-reports" class="page">
+                    <div class="page-content">
+                        <h2>📄 Reports</h2>
+                        <p>Generate daily, weekly, and monthly performance reports.</p>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- JAVASCRIPT -->
+    <!-- ============================================================ -->
+    <script>
+        // ============================================================
+        // NAVIGATION
+        // ============================================================
+        document.addEventListener('DOMContentLoaded', function() {
+            const navItems = document.querySelectorAll('.nav-item');
+            const pages = document.querySelectorAll('.page');
+
+            navItems.forEach(item => {
+                item.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const pageName = this.dataset.page;
+                    navItems.forEach(n => n.classList.remove('active'));
+                    this.classList.add('active');
+                    pages.forEach(p => p.classList.remove('active'));
+                    const targetPage = document.getElementById('page-' + pageName);
+                    if (targetPage) {
+                        targetPage.classList.add('active');
+                        if (pageName === 'chart') {
+                            setTimeout(drawChart, 200);
+                        }
+                    }
+                });
+            });
+
+            // Set default
+            const defaultPage = document.querySelector('.nav-item.active');
+            if (defaultPage) {
+                const pageName = defaultPage.dataset.page;
+                const targetPage = document.getElementById('page-' + pageName);
+                if (targetPage) {
+                    pages.forEach(p => p.classList.remove('active'));
+                    targetPage.classList.add('active');
+                }
+            }
+
+            // ============================================================
+            // DRAW CHART
+            // ============================================================
+            function drawChart() {
+                const canvas = document.getElementById('chartCanvas');
+                if (!canvas) return;
+
+                const container = canvas.parentElement;
+                canvas.width = container.clientWidth || 800;
+                canvas.height = container.clientHeight || 500;
+
+                const ctx = canvas.getContext('2d');
+                const w = canvas.width;
+                const h = canvas.height;
+
+                ctx.fillStyle = '#0f1620';
+                ctx.fillRect(0, 0, w, h);
+
+                // Generate candles
+                const count = 60;
+                const candles = [];
+                let price = 22400;
+
+                for (let i = 0; i < count; i++) {
+                    const change = (Math.random() - 0.48) * 60;
+                    const open = price;
+                    const close = price + change;
+                    const high = Math.max(open, close) + Math.random() * 20;
+                    const low = Math.min(open, close) - Math.random() * 20;
+                    candles.push({ open, close, high, low });
+                    price = close;
+                }
+
+                let minPrice = Infinity;
+                let maxPrice = -Infinity;
+                candles.forEach(c => {
+                    if (c.high > maxPrice) maxPrice = c.high;
+                    if (c.low < minPrice) minPrice = c.low;
+                });
+                const padding = 40;
+                const candleWidth = (w - padding * 2) / count * 0.7;
+                const gap = (w - padding * 2) / count * 0.3;
+                const range = maxPrice - minPrice || 1;
+
+                // Grid
+                ctx.strokeStyle = '#1a2433';
+                ctx.lineWidth = 0.5;
+                for (let i = 0; i < 5; i++) {
+                    const y = padding + (h - padding * 2) * (i / 4);
+                    ctx.beginPath();
+                    ctx.moveTo(padding, y);
+                    ctx.lineTo(w - padding, y);
+                    ctx.stroke();
+                    const label = (maxPrice - (range * i / 4)).toFixed(0);
+                    ctx.fillStyle = '#5a6f8a';
+                    ctx.font = '10px sans-serif';
+                    ctx.fillText(label, 4, y + 3);
+                }
+
+                // Candles
+                candles.forEach((c, i) => {
+                    const x = padding + i * (candleWidth + gap);
+                    const yHigh = padding + (h - padding * 2) * (1 - (c.high - minPrice) / range);
+                    const yLow = padding + (h - padding * 2) * (1 - (c.low - minPrice) / range);
+                    const yOpen = padding + (h - padding * 2) * (1 - (c.open - minPrice) / range);
+                    const yClose = padding + (h - padding * 2) * (1 - (c.close - minPrice) / range);
+
+                    const isBull = c.close > c.open;
+                    const color = isBull ? '#22c55e' : '#ef4444';
+
+                    ctx.strokeStyle = color;
+                    ctx.lineWidth = 1;
+                    ctx.beginPath();
+                    ctx.moveTo(x + candleWidth / 2, yHigh);
+                    ctx.lineTo(x + candleWidth / 2, yLow);
+                    ctx.stroke();
+
+                    const bodyTop = Math.min(yOpen, yClose);
+                    const bodyHeight = Math.max(Math.abs(yClose - yOpen), 2);
+                    ctx.fillStyle = color;
+                    ctx.fillRect(x, bodyTop, candleWidth, bodyHeight);
+                });
+
+                // MA line
+                ctx.strokeStyle = '#3b82f6';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                let first = true;
+                for (let i = 19; i < candles.length; i++) {
+                    let sum = 0;
+                    for (let j = i - 19; j <= i; j++) {
+                        sum += candles[j].close;
+                    }
+                    const ma = sum / 20;
+                    const x = padding + i * (candleWidth + gap) + candleWidth / 2;
+                    const y = padding + (h - padding * 2) * (1 - (ma - minPrice) / range);
+                    if (first) {
+                        ctx.moveTo(x, y);
+                        first = false;
+                    } else {
+                        ctx.lineTo(x, y);
+                    }
+                }
+                ctx.stroke();
+
+                // BUY/SELL markers
+                const markers = [
+                    { index: 12, type: 'BUY', price: candles[12].close },
+                    { index: 28, type: 'SELL', price: candles[28].close },
+                    { index: 45, type: 'BUY', price: candles[45].close },
+                ];
+
+                markers.forEach(m => {
+                    const x = padding + m.index * (candleWidth + gap) + candleWidth / 2;
+                    const y = padding + (h - padding * 2) * (1 - (m.price - minPrice) / range);
+                    const isBuy = m.type === 'BUY';
+                    ctx.fillStyle = isBuy ? '#22c55e' : '#ef4444';
+                    ctx.beginPath();
+                    ctx.moveTo(x, isBuy ? y - 14 : y + 14);
+                    ctx.lineTo(x - 7, isBuy ? y - 4 : y + 4);
+                    ctx.lineTo(x + 7, isBuy ? y - 4 : y + 4);
+                    ctx.closePath();
+                    ctx.fill();
+
+                    ctx.fillStyle = '#e8edf5';
+                    ctx.font = '8px sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(m.type, x, isBuy ? y - 18 : y + 26);
+                });
+            }
+
+            // Draw on load
+            setTimeout(function() {
+                const chartPage = document.getElementById('page-chart');
+                if (chartPage && chartPage.classList.contains('active')) {
+                    drawChart();
+                }
+            }, 300);
+
+            // Resize handler
+            let resizeTimeout;
+            window.addEventListener('resize', function() {
+                clearTimeout(resizeTimeout);
+                resizeTimeout = setTimeout(function() {
+                    const chartPage = document.getElementById('page-chart');
+                    if (chartPage && chartPage.classList.contains('active')) {
+                        drawChart();
+                    }
+                }, 200);
+            });
+
+            // ============================================================
+            // TOAST NOTIFICATION
+            // ============================================================
+            window.showToast = function(message) {
+                const existing = document.querySelector('.toast');
+                if (existing) existing.remove();
+                const toast = document.createElement('div');
+                toast.className = 'toast';
+                toast.textContent = message;
+                document.body.appendChild(toast);
+                setTimeout(() => {
+                    toast.style.opacity = '0';
+                    toast.style.transition = 'opacity 0.3s ease';
+                    setTimeout(() => toast.remove(), 300);
+                }, 2500);
+            };
+
+            // ============================================================
+            // MODULE FUNCTIONS (Connected to Backend)
+            // ============================================================
+            const API_BASE = 'http://localhost:5000/api';
+
+            window.createNewModule = async function() {
+                const name = prompt("Enter module name:");
+                if (!name) return;
+
+                const type = prompt("Enter module type (strategy/indicator/screener/alert):");
+                if (!type) return;
+
+                try {
+                    const response = await fetch(`${API_BASE}/modules/create`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            name: name,
+                            type: type,
+                            code: `# ${name} - ${type}\n# Write your code here`
+                        })
+                    });
+                    const data = await response.json();
+                    if (data.status === 'success') {
+                        showToast(`✅ Module '${name}' created successfully!`);
+                        setTimeout(() => location.reload(), 1500);
+                    } else {
+                        showToast(`❌ Error: ${data.message}`);
+                    }
+                } catch (error) {
+                    showToast('❌ Backend not running. Start with: python3 app.py');
+                    console.error('Error:', error);
+                }
+            };
+
+            window.runModule = async function(moduleName) {
+                try {
+                    const response = await fetch(`${API_BASE}/run_module/${encodeURIComponent(moduleName)}`, {
+                        method: 'POST'
+                    });
+                    const data = await response.json();
+                    showToast(`✅ ${data.message}`);
+                } catch (error) {
+                    showToast('❌ Backend not running');
+                    console.error('Error:', error);
+                }
+            };
+
+            window.stopModule = async function(moduleName) {
+                try {
+                    const response = await fetch(`${API_BASE}/stop_module/${encodeURIComponent(moduleName)}`, {
+                        method: 'POST'
+                    });
+                    const data = await response.json();
+                    showToast(`✅ ${data.message}`);
+                } catch (error) {
+                    showToast('❌ Backend not running');
+                    console.error('Error:', error);
+                }
+            };
+
+            window.pauseModule = function(moduleName) {
+                showToast(`⏸️ ${moduleName}: Pause clicked`);
+            };
+
+            window.resumeModule = function(moduleName) {
+                showToast(`▶️ ${moduleName}: Resume clicked`);
+            };
+
+            window.editModule = function(moduleName) {
+                showToast(`📋 ${moduleName}: Edit clicked`);
+            };
+
+            window.backtestModule = function(moduleName) {
+                showToast(`⏪ ${moduleName}: Backtest clicked`);
+            };
+
+            console.log('✅ KJs TRD Trading Terminal Loaded Successfully');
+            console.log('🔗 Backend API: http://localhost:5000/api');
+        });
+    </script>
+
+</body>
+</html>
