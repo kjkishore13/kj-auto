@@ -1128,290 +1128,302 @@ class MomentumBreakout(Module):
     <!-- JAVASCRIPT -->
     <!-- ============================================================ -->
     <script>
-        // ============================================================
-        // NAVIGATION
-        // ============================================================
-        document.addEventListener('DOMContentLoaded', function() {
-            const navItems = document.querySelectorAll('.nav-item');
-            const pages = document.querySelectorAll('.page');
+    // ============================================================
+    // NAVIGATION
+    // ============================================================
+    document.addEventListener('DOMContentLoaded', function() {
+        const navItems = document.querySelectorAll('.nav-item');
+        const pages = document.querySelectorAll('.page');
 
-            navItems.forEach(item => {
-                item.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    const pageName = this.dataset.page;
-                    navItems.forEach(n => n.classList.remove('active'));
-                    this.classList.add('active');
-                    pages.forEach(p => p.classList.remove('active'));
-                    const targetPage = document.getElementById('page-' + pageName);
-                    if (targetPage) {
-                        targetPage.classList.add('active');
-                        if (pageName === 'chart') {
-                            setTimeout(drawChart, 200);
-                        }
-                    }
-                });
-            });
-
-            // Set default
-            const defaultPage = document.querySelector('.nav-item.active');
-            if (defaultPage) {
-                const pageName = defaultPage.dataset.page;
+        navItems.forEach(item => {
+            item.addEventListener('click', function(e) {
+                e.preventDefault();
+                const pageName = this.dataset.page;
+                navItems.forEach(n => n.classList.remove('active'));
+                this.classList.add('active');
+                pages.forEach(p => p.classList.remove('active'));
                 const targetPage = document.getElementById('page-' + pageName);
                 if (targetPage) {
-                    pages.forEach(p => p.classList.remove('active'));
                     targetPage.classList.add('active');
-                }
-            }
-
-            // ============================================================
-            // DRAW CHART
-            // ============================================================
-            function drawChart() {
-                const canvas = document.getElementById('chartCanvas');
-                if (!canvas) return;
-
-                const container = canvas.parentElement;
-                canvas.width = container.clientWidth || 800;
-                canvas.height = container.clientHeight || 500;
-
-                const ctx = canvas.getContext('2d');
-                const w = canvas.width;
-                const h = canvas.height;
-
-                ctx.fillStyle = '#0f1620';
-                ctx.fillRect(0, 0, w, h);
-
-                // Generate candles
-                const count = 60;
-                const candles = [];
-                let price = 22400;
-
-                for (let i = 0; i < count; i++) {
-                    const change = (Math.random() - 0.48) * 60;
-                    const open = price;
-                    const close = price + change;
-                    const high = Math.max(open, close) + Math.random() * 20;
-                    const low = Math.min(open, close) - Math.random() * 20;
-                    candles.push({ open, close, high, low });
-                    price = close;
-                }
-
-                let minPrice = Infinity;
-                let maxPrice = -Infinity;
-                candles.forEach(c => {
-                    if (c.high > maxPrice) maxPrice = c.high;
-                    if (c.low < minPrice) minPrice = c.low;
-                });
-                const padding = 40;
-                const candleWidth = (w - padding * 2) / count * 0.7;
-                const gap = (w - padding * 2) / count * 0.3;
-                const range = maxPrice - minPrice || 1;
-
-                // Grid
-                ctx.strokeStyle = '#1a2433';
-                ctx.lineWidth = 0.5;
-                for (let i = 0; i < 5; i++) {
-                    const y = padding + (h - padding * 2) * (i / 4);
-                    ctx.beginPath();
-                    ctx.moveTo(padding, y);
-                    ctx.lineTo(w - padding, y);
-                    ctx.stroke();
-                    const label = (maxPrice - (range * i / 4)).toFixed(0);
-                    ctx.fillStyle = '#5a6f8a';
-                    ctx.font = '10px sans-serif';
-                    ctx.fillText(label, 4, y + 3);
-                }
-
-                // Candles
-                candles.forEach((c, i) => {
-                    const x = padding + i * (candleWidth + gap);
-                    const yHigh = padding + (h - padding * 2) * (1 - (c.high - minPrice) / range);
-                    const yLow = padding + (h - padding * 2) * (1 - (c.low - minPrice) / range);
-                    const yOpen = padding + (h - padding * 2) * (1 - (c.open - minPrice) / range);
-                    const yClose = padding + (h - padding * 2) * (1 - (c.close - minPrice) / range);
-
-                    const isBull = c.close > c.open;
-                    const color = isBull ? '#22c55e' : '#ef4444';
-
-                    ctx.strokeStyle = color;
-                    ctx.lineWidth = 1;
-                    ctx.beginPath();
-                    ctx.moveTo(x + candleWidth / 2, yHigh);
-                    ctx.lineTo(x + candleWidth / 2, yLow);
-                    ctx.stroke();
-
-                    const bodyTop = Math.min(yOpen, yClose);
-                    const bodyHeight = Math.max(Math.abs(yClose - yOpen), 2);
-                    ctx.fillStyle = color;
-                    ctx.fillRect(x, bodyTop, candleWidth, bodyHeight);
-                });
-
-                // MA line
-                ctx.strokeStyle = '#3b82f6';
-                ctx.lineWidth = 2;
-                ctx.beginPath();
-                let first = true;
-                for (let i = 19; i < candles.length; i++) {
-                    let sum = 0;
-                    for (let j = i - 19; j <= i; j++) {
-                        sum += candles[j].close;
-                    }
-                    const ma = sum / 20;
-                    const x = padding + i * (candleWidth + gap) + candleWidth / 2;
-                    const y = padding + (h - padding * 2) * (1 - (ma - minPrice) / range);
-                    if (first) {
-                        ctx.moveTo(x, y);
-                        first = false;
-                    } else {
-                        ctx.lineTo(x, y);
+                    if (pageName === 'chart') {
+                        setTimeout(drawChart, 200);
                     }
                 }
-                ctx.stroke();
-
-                // BUY/SELL markers
-                const markers = [
-                    { index: 12, type: 'BUY', price: candles[12].close },
-                    { index: 28, type: 'SELL', price: candles[28].close },
-                    { index: 45, type: 'BUY', price: candles[45].close },
-                ];
-
-                markers.forEach(m => {
-                    const x = padding + m.index * (candleWidth + gap) + candleWidth / 2;
-                    const y = padding + (h - padding * 2) * (1 - (m.price - minPrice) / range);
-                    const isBuy = m.type === 'BUY';
-                    ctx.fillStyle = isBuy ? '#22c55e' : '#ef4444';
-                    ctx.beginPath();
-                    ctx.moveTo(x, isBuy ? y - 14 : y + 14);
-                    ctx.lineTo(x - 7, isBuy ? y - 4 : y + 4);
-                    ctx.lineTo(x + 7, isBuy ? y - 4 : y + 4);
-                    ctx.closePath();
-                    ctx.fill();
-
-                    ctx.fillStyle = '#e8edf5';
-                    ctx.font = '8px sans-serif';
-                    ctx.textAlign = 'center';
-                    ctx.fillText(m.type, x, isBuy ? y - 18 : y + 26);
-                });
-            }
-
-            // Draw on load
-            setTimeout(function() {
-                const chartPage = document.getElementById('page-chart');
-                if (chartPage && chartPage.classList.contains('active')) {
-                    drawChart();
-                }
-            }, 300);
-
-            // Resize handler
-            let resizeTimeout;
-            window.addEventListener('resize', function() {
-                clearTimeout(resizeTimeout);
-                resizeTimeout = setTimeout(function() {
-                    const chartPage = document.getElementById('page-chart');
-                    if (chartPage && chartPage.classList.contains('active')) {
-                        drawChart();
-                    }
-                }, 200);
             });
-
-            // ============================================================
-            // TOAST NOTIFICATION
-            // ============================================================
-            window.showToast = function(message) {
-                const existing = document.querySelector('.toast');
-                if (existing) existing.remove();
-                const toast = document.createElement('div');
-                toast.className = 'toast';
-                toast.textContent = message;
-                document.body.appendChild(toast);
-                setTimeout(() => {
-                    toast.style.opacity = '0';
-                    toast.style.transition = 'opacity 0.3s ease';
-                    setTimeout(() => toast.remove(), 300);
-                }, 2500);
-            };
-
-            // ============================================================
-            // MODULE FUNCTIONS (Connected to Backend)
-            // ============================================================
-            const API_BASE = 'http://localhost:5000/api';
-
-            window.createNewModule = async function() {
-                const name = prompt("Enter module name:");
-                if (!name) return;
-
-                const type = prompt("Enter module type (strategy/indicator/screener/alert):");
-                if (!type) return;
-
-                try {
-                    const response = await fetch(`${API_BASE}/modules/create`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            name: name,
-                            type: type,
-                            code: `# ${name} - ${type}\n# Write your code here`
-                        })
-                    });
-                    const data = await response.json();
-                    if (data.status === 'success') {
-                        showToast(`✅ Module '${name}' created successfully!`);
-                        setTimeout(() => location.reload(), 1500);
-                    } else {
-                        showToast(`❌ Error: ${data.message}`);
-                    }
-                } catch (error) {
-                    showToast('❌ Backend not running. Start with: python3 app.py');
-                    console.error('Error:', error);
-                }
-            };
-
-            window.runModule = async function(moduleName) {
-                try {
-                    const response = await fetch(`${API_BASE}/run_module/${encodeURIComponent(moduleName)}`, {
-                        method: 'POST'
-                    });
-                    const data = await response.json();
-                    showToast(`✅ ${data.message}`);
-                } catch (error) {
-                    showToast('❌ Backend not running');
-                    console.error('Error:', error);
-                }
-            };
-
-            window.stopModule = async function(moduleName) {
-                try {
-                    const response = await fetch(`${API_BASE}/stop_module/${encodeURIComponent(moduleName)}`, {
-                        method: 'POST'
-                    });
-                    const data = await response.json();
-                    showToast(`✅ ${data.message}`);
-                } catch (error) {
-                    showToast('❌ Backend not running');
-                    console.error('Error:', error);
-                }
-            };
-
-            window.pauseModule = function(moduleName) {
-                showToast(`⏸️ ${moduleName}: Pause clicked`);
-            };
-
-            window.resumeModule = function(moduleName) {
-                showToast(`▶️ ${moduleName}: Resume clicked`);
-            };
-
-            window.editModule = function(moduleName) {
-                showToast(`📋 ${moduleName}: Edit clicked`);
-            };
-
-            window.backtestModule = function(moduleName) {
-                showToast(`⏪ ${moduleName}: Backtest clicked`);
-            };
-
-            console.log('✅ KJs TRD Trading Terminal Loaded Successfully');
-            console.log('🔗 Backend API: http://localhost:5000/api');
         });
-    </script>
 
-</body>
-</html>
+        // Set default
+        const defaultPage = document.querySelector('.nav-item.active');
+        if (defaultPage) {
+            const pageName = defaultPage.dataset.page;
+            const targetPage = document.getElementById('page-' + pageName);
+            if (targetPage) {
+                pages.forEach(p => p.classList.remove('active'));
+                targetPage.classList.add('active');
+            }
+        }
+    });
+
+    // ============================================================
+    // DRAW CHART
+    // ============================================================
+    function drawChart() {
+        const canvas = document.getElementById('chartCanvas');
+        if (!canvas) return;
+        const container = canvas.parentElement;
+        canvas.width = container.clientWidth || 800;
+        canvas.height = container.clientHeight || 500;
+        const ctx = canvas.getContext('2d');
+        const w = canvas.width;
+        const h = canvas.height;
+        ctx.fillStyle = '#0f1620';
+        ctx.fillRect(0, 0, w, h);
+        const count = 60;
+        const candles = [];
+        let price = 22400;
+        for (let i = 0; i < count; i++) {
+            const change = (Math.random() - 0.48) * 60;
+            const open = price;
+            const close = price + change;
+            const high = Math.max(open, close) + Math.random() * 20;
+            const low = Math.min(open, close) - Math.random() * 20;
+            candles.push({ open, close, high, low });
+            price = close;
+        }
+        let minPrice = Infinity;
+        let maxPrice = -Infinity;
+        candles.forEach(c => {
+            if (c.high > maxPrice) maxPrice = c.high;
+            if (c.low < minPrice) minPrice = c.low;
+        });
+        const padding = 40;
+        const candleWidth = (w - padding * 2) / count * 0.7;
+        const gap = (w - padding * 2) / count * 0.3;
+        const range = maxPrice - minPrice || 1;
+        ctx.strokeStyle = '#1a2433';
+        ctx.lineWidth = 0.5;
+        for (let i = 0; i < 5; i++) {
+            const y = padding + (h - padding * 2) * (i / 4);
+            ctx.beginPath();
+            ctx.moveTo(padding, y);
+            ctx.lineTo(w - padding, y);
+            ctx.stroke();
+            const label = (maxPrice - (range * i / 4)).toFixed(0);
+            ctx.fillStyle = '#5a6f8a';
+            ctx.font = '10px sans-serif';
+            ctx.fillText(label, 4, y + 3);
+        }
+        candles.forEach((c, i) => {
+            const x = padding + i * (candleWidth + gap);
+            const yHigh = padding + (h - padding * 2) * (1 - (c.high - minPrice) / range);
+            const yLow = padding + (h - padding * 2) * (1 - (c.low - minPrice) / range);
+            const yOpen = padding + (h - padding * 2) * (1 - (c.open - minPrice) / range);
+            const yClose = padding + (h - padding * 2) * (1 - (c.close - minPrice) / range);
+            const isBull = c.close > c.open;
+            const color = isBull ? '#22c55e' : '#ef4444';
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(x + candleWidth / 2, yHigh);
+            ctx.lineTo(x + candleWidth / 2, yLow);
+            ctx.stroke();
+            const bodyTop = Math.min(yOpen, yClose);
+            const bodyHeight = Math.max(Math.abs(yClose - yOpen), 2);
+            ctx.fillStyle = color;
+            ctx.fillRect(x, bodyTop, candleWidth, bodyHeight);
+        });
+        ctx.strokeStyle = '#3b82f6';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        let first = true;
+        for (let i = 19; i < candles.length; i++) {
+            let sum = 0;
+            for (let j = i - 19; j <= i; j++) {
+                sum += candles[j].close;
+            }
+            const ma = sum / 20;
+            const x = padding + i * (candleWidth + gap) + candleWidth / 2;
+            const y = padding + (h - padding * 2) * (1 - (ma - minPrice) / range);
+            if (first) {
+                ctx.moveTo(x, y);
+                first = false;
+            } else {
+                ctx.lineTo(x, y);
+            }
+        }
+        ctx.stroke();
+        const markers = [
+            { index: 12, type: 'BUY', price: candles[12].close },
+            { index: 28, type: 'SELL', price: candles[28].close },
+            { index: 45, type: 'BUY', price: candles[45].close },
+        ];
+        markers.forEach(m => {
+            const x = padding + m.index * (candleWidth + gap) + candleWidth / 2;
+            const y = padding + (h - padding * 2) * (1 - (m.price - minPrice) / range);
+            const isBuy = m.type === 'BUY';
+            ctx.fillStyle = isBuy ? '#22c55e' : '#ef4444';
+            ctx.beginPath();
+            ctx.moveTo(x, isBuy ? y - 14 : y + 14);
+            ctx.lineTo(x - 7, isBuy ? y - 4 : y + 4);
+            ctx.lineTo(x + 7, isBuy ? y - 4 : y + 4);
+            ctx.closePath();
+            ctx.fill();
+            ctx.fillStyle = '#e8edf5';
+            ctx.font = '8px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText(m.type, x, isBuy ? y - 18 : y + 26);
+        });
+    }
+
+    // ============================================================
+    // TOAST NOTIFICATION
+    // ============================================================
+    window.showToast = function(message) {
+        const existing = document.querySelector('.toast');
+        if (existing) existing.remove();
+        const toast = document.createElement('div');
+        toast.className = 'toast';
+        toast.textContent = message;
+        document.body.appendChild(toast);
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            toast.style.transition = 'opacity 0.3s ease';
+            setTimeout(() => toast.remove(), 300);
+        }, 2500);
+    };
+
+    // ============================================================
+    // CREATE NEW MODULE
+    // ============================================================
+    window.createNewModule = async function() {
+        const name = prompt("Enter module name:");
+        if (!name) return;
+        const type = prompt("Enter module type (strategy/indicator/screener/alert):");
+        if (!type) return;
+        try {
+            showToast(`⏳ Creating module '${name}'...`);
+            const response = await fetch('http://localhost:5000/api/modules/create', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    name: name,
+                    type: type,
+                    code: `# ${name} - ${type}\n# Write your code here`
+                })
+            });
+            const data = await response.json();
+            console.log('📦 Module creation response:', data);
+            if (data.status === 'success') {
+                showToast(`✅ Module '${name}' created successfully!`);
+                setTimeout(() => location.reload(), 1500);
+            } else {
+                showToast(`❌ Error: ${data.message}`);
+            }
+        } catch (error) {
+            console.error('❌ Error creating module:', error);
+            showToast('❌ Backend not running. Start with: python3 app.py');
+        }
+    };
+
+    // ============================================================
+    // RUN MODULE
+    // ============================================================
+    window.runModule = async function(moduleName) {
+        try {
+            showToast(`⏳ Starting module '${moduleName}'...`);
+            const response = await fetch(`http://localhost:5000/api/run_module/${encodeURIComponent(moduleName)}`, {
+                method: 'POST'
+            });
+            const data = await response.json();
+            console.log('▶️ Run module response:', data);
+            showToast(`✅ ${data.message}`);
+        } catch (error) {
+            console.error('❌ Error running module:', error);
+            showToast('❌ Backend not running');
+        }
+    };
+
+    // ============================================================
+    // STOP MODULE
+    // ============================================================
+    window.stopModule = async function(moduleName) {
+        try {
+            showToast(`⏳ Stopping module '${moduleName}'...`);
+            const response = await fetch(`http://localhost:5000/api/stop_module/${encodeURIComponent(moduleName)}`, {
+                method: 'POST'
+            });
+            const data = await response.json();
+            console.log('⏹️ Stop module response:', data);
+            showToast(`✅ ${data.message}`);
+        } catch (error) {
+            console.error('❌ Error stopping module:', error);
+            showToast('❌ Backend not running');
+        }
+    };
+
+    // ============================================================
+    // PAUSE MODULE
+    // ============================================================
+    window.pauseModule = function(moduleName) {
+        showToast(`⏸️ ${moduleName}: Pause clicked (coming soon)`);
+    };
+
+    // ============================================================
+    // RESUME MODULE
+    // ============================================================
+    window.resumeModule = function(moduleName) {
+        showToast(`▶️ ${moduleName}: Resume clicked (coming soon)`);
+    };
+
+    // ============================================================
+    // EDIT MODULE
+    // ============================================================
+    window.editModule = function(moduleName) {
+        showToast(`📋 ${moduleName}: Edit clicked (coming soon)`);
+    };
+
+    // ============================================================
+    // BACKTEST MODULE
+    // ============================================================
+    window.backtestModule = function(moduleName) {
+        showToast(`⏪ ${moduleName}: Backtest clicked (coming soon)`);
+    };
+
+    // ============================================================
+    // PAGE BUTTONS (Watchlists, Screener, Backtesting, etc.)
+    // ============================================================
+    document.querySelectorAll('.page-content .btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const parent = this.closest('.page-content');
+            const title = parent?.querySelector('h2')?.textContent?.trim() || 'Page';
+            showToast(`${title}: ${this.textContent} clicked (coming soon)`);
+        });
+    });
+
+    // ============================================================
+    // RESIZE HANDLER
+    // ============================================================
+    let resizeTimeout;
+    window.addEventListener('resize', function() {
+        clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(function() {
+            const chartPage = document.getElementById('page-chart');
+            if (chartPage && chartPage.classList.contains('active')) {
+                drawChart();
+            }
+        }, 200);
+    });
+
+    // ============================================================
+    // INITIAL LOAD
+    // ============================================================
+    setTimeout(function() {
+        const chartPage = document.getElementById('page-chart');
+        if (chartPage && chartPage.classList.contains('active')) {
+            drawChart();
+        }
+    }, 300);
+
+    console.log('✅ KJs TRD Trading Terminal Loaded Successfully');
+    console.log('🔗 Backend API: http://localhost:5000/api');
+</script>
